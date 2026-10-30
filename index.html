@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NutriCheck – BMI (IMC) calculator &amp; nutrition guide</title>
+<style>
+:root{
+  --bg:#f6f8f4; --surface:#ffffff; --text:#1d2a22; --muted:#5b6b61; --border:#dfe6dc;
+  --accent:#2f7d4f; --accent-text:#ffffff; --soft:#e8f2ea;
+  --c-under:#4a8fd8; --c-normal:#3fa66b; --c-over:#e0a43a; --c-obese:#d4603f;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111a15; --surface:#18241d; --text:#e6efe8; --muted:#9db0a3; --border:#2a3b31;
+    --accent:#5cc185; --accent-text:#0d1a12; --soft:#1e3026; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111a15; --surface:#18241d; --text:#e6efe8; --muted:#9db0a3; --border:#2a3b31;
+  --accent:#5cc185; --accent-text:#0d1a12; --soft:#1e3026; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+header{padding:44px 0 24px}
+.brand{font-weight:700;letter-spacing:.02em;color:var(--accent)}
+h1{font-size:clamp(1.9rem,5vw,2.8rem);line-height:1.15;margin:.4em 0 .3em}
+header p{color:var(--muted);max-width:56ch;margin:0;font-size:1.05rem}
+section{margin:28px 0}
+h2{font-size:1.4rem;margin:0 0 14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin-bottom:16px}
+.seg button{border:0;background:transparent;color:var(--text);padding:8px 18px;font:inherit;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.fields{display:flex;flex-wrap:wrap;gap:14px}
+.field{flex:1 1 140px}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+input{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.go{margin-top:18px;width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:600;
+  background:var(--accent);color:var(--accent-text);cursor:pointer}
+.err{color:var(--c-obese);margin:12px 0 0;min-height:1.2em}
+#result{display:none;margin-top:20px;border-top:1px solid var(--border);padding-top:20px}
+.big{font-size:3rem;font-weight:700;line-height:1}
+.cat{font-weight:600;font-size:1.15rem;margin-top:4px}
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:22px 0 6px;position:relative}
+.bar span:nth-child(1){width:14%;background:var(--c-under)}
+.bar span:nth-child(2){width:26%;background:var(--c-normal)}
+.bar span:nth-child(3){width:20%;background:var(--c-over)}
+.bar span:nth-child(4){width:40%;background:var(--c-obese)}
+.track{position:relative}
+.marker{position:absolute;top:-6px;width:4px;height:26px;border-radius:2px;background:var(--text);
+  transform:translateX(-50%);transition:left .4s ease}
+.ticks{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+.range{background:var(--soft);border-radius:10px;padding:10px 14px;margin-top:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.tip h3{margin:0 0 6px;font-size:1.05rem}
+.tip p{margin:0;color:var(--muted);font-size:.95rem}
+.note{font-size:.88rem;color:var(--muted)}
+footer{padding:20px 0 48px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">🥗 NutriCheck</div>
+    <h1>Eat well. Know your numbers.</h1>
+    <p>Calculate your BMI (IMC – Índice de Massa Corporal) in seconds, then explore simple, practical nutrition habits.</p>
+  </header>
+
+  <section aria-labelledby="calc-title">
+    <h2 id="calc-title">BMI (IMC) calculator</h2>
+    <div class="card">
+      <div class="seg" role="group" aria-label="Units">
+        <button id="u-metric" class="on" type="button">Metric (cm, kg)</button>
+        <button id="u-imp" type="button">Imperial (ft, lb)</button>
+      </div>
+
+      <div class="fields" id="f-metric">
+        <div class="field"><label for="cm">Height (cm)</label><input id="cm" type="number" inputmode="decimal" placeholder="e.g. 175"></div>
+        <div class="field"><label for="kg">Weight (kg)</label><input id="kg" type="number" inputmode="decimal" placeholder="e.g. 70"></div>
+      </div>
+      <div class="fields" id="f-imp" hidden>
+        <div class="field"><label for="ft">Height (ft)</label><input id="ft" type="number" inputmode="numeric" placeholder="5"></div>
+        <div class="field"><label for="inch">Height (in)</label><input id="inch" type="number" inputmode="decimal" placeholder="9"></div>
+        <div class="field"><label for="lb">Weight (lb)</label><input id="lb" type="number" inputmode="decimal" placeholder="154"></div>
+      </div>
+
+      <button class="go" id="go" type="button">Calculate BMI</button>
+      <p class="err" id="err" role="alert"></p>
+
+      <div id="result" aria-live="polite">
+        <div class="big" id="bmi">–</div>
+        <div class="cat" id="cat"></div>
+        <div class="track">
+          <div class="bar"><span></span><span></span><span></span><span></span></div>
+          <div class="marker" id="marker" style="left:0%"></div>
+        </div>
+        <div class="ticks"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+        <div class="range" id="range"></div>
+      </div>
+    </div>
+    <p class="note">BMI is a quick screening tool, not a diagnosis. It doesn’t account for muscle mass, age, sex or body shape. For personal advice, talk to a doctor or registered dietitian.</p>
+  </section>
+
+  <section aria-labelledby="tips-title">
+    <h2 id="tips-title">Everyday nutrition basics</h2>
+    <div class="grid">
+      <div class="card tip"><h3>🥦 Fill half your plate with plants</h3><p>Vegetables and fruit add fibre, vitamins and volume. Aim for a variety of colours through the week.</p></div>
+      <div class="card tip"><h3>🌾 Choose whole grains</h3><p>Oats, brown rice, whole-wheat bread and legumes give steadier energy than refined grains.</p></div>
+      <div class="card tip"><h3>🐟 Include quality protein</h3><p>Fish, eggs, poultry, beans, lentils and tofu help you feel full and support muscle.</p></div>
+      <div class="card tip"><h3>🫒 Pick healthier fats</h3><p>Olive oil, nuts, seeds and oily fish are better choices than fried and heavily processed foods.</p></div>
+      <div class="card tip"><h3>💧 Stay hydrated</h3><p>Water is the best everyday drink. Go easy on sugary drinks and juices.</p></div>
+      <div class="card tip"><h3>🕒 Keep regular meals</h3><p>Eating at roughly the same times each day supports steady energy, mood and sleep.</p></div>
+    </div>
+    <p class="note">Some medications can affect appetite, thirst or weight. If you take any, check with your doctor or pharmacist before making big changes to your diet.</p>
+  </section>
+
+  <footer class="note">© NutriCheck · General information only, not medical advice.</footer>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var unit = 'metric';
+
+  function setUnit(u){
+    unit = u;
+    $('u-metric').classList.toggle('on', u === 'metric');
+    $('u-imp').classList.toggle('on', u === 'imperial');
+    $('f-metric').hidden = (u !== 'metric');
+    $('f-imp').hidden = (u !== 'imperial');
+    $('result').style.display = 'none';
+    $('err').textContent = '';
+  }
+
+  function category(b){
+    if (b < 18.5) return { t: 'Underweight', c: 'var(--c-under)' };
+    if (b < 25)   return { t: 'Healthy weight', c: 'var(--c-normal)' };
+    if (b < 30)   return { t: 'Overweight', c: 'var(--c-over)' };
+    return { t: 'Obesity range', c: 'var(--c-obese)' };
+  }
+
+  function calc(){
+    var h, w;
+    if (unit === 'metric'){
+      h = parseFloat($('cm').value) / 100;
+      w = parseFloat($('kg').value);
+    } else {
+      var ft = parseFloat($('ft').value) || 0;
+      var inch = parseFloat($('inch').value) || 0;
+      h = (ft * 12 + inch) * 0.0254;
+      w = parseFloat($('lb').value) * 0.45359237;
+    }
+    if (!(h > 0.9 && h < 2.5) || !(w > 20 && w < 400)){
+      $('result').style.display = 'none';
+      $('err').textContent = 'Please enter a realistic height and weight.';
+      return;
+    }
+    $('err').textContent = '';
+
+    var bmi = w / (h * h);
+    var cat = category(bmi);
+    $('bmi').textContent = bmi.toFixed(1);
+    $('cat').textContent = cat.t;
+    $('cat').style.color = cat.c;
+
+    var pos = Math.max(0, Math.min(1, (bmi - 15) / 25)) * 100;
+    $('marker').style.left = pos + '%';
+
+    var lo = 18.5 * h * h, hi = 24.9 * h * h, u = 'kg';
+    if (unit === 'imperial'){ lo /= 0.45359237; hi /= 0.45359237; u = 'lb'; }
+    $('range').textContent = 'For your height, a BMI of 18.5–24.9 corresponds to about ' +
+      lo.toFixed(0) + '–' + hi.toFixed(0) + ' ' + u + '.';
+
+    $('result').style.display = 'block';
+  }
+
+  $('u-metric').addEventListener('click', function(){ setUnit('metric'); });
+  $('u-imp').addEventListener('click', function(){ setUnit('imperial'); });
+  $('go').addEventListener('click', calc);
+  ['cm','kg','ft','inch','lb'].forEach(function(id){
+    $(id).addEventListener('keydown', function(e){ if (e.key === 'Enter') calc(); });
+  });
+})();
+</script>
+</body>
+</html>
