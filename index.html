@@ -141,8 +141,42 @@ body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms
 .mini{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:12px}
 .mini .go{margin:0;width:auto;padding:11px 20px}
 #whtr-out{margin-top:12px;min-height:1.4em;font-weight:600}
+/* spinning gradient border */
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+.spin{position:relative}
+.spin::before{content:'';position:absolute;inset:-1px;border-radius:21px;padding:2px;pointer-events:none;
+  background:conic-gradient(from var(--ang),transparent 0 55%,var(--accent) 78%,var(--accent2) 90%,transparent 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  animation:spin 5s linear infinite}
+@keyframes spin{to{--ang:360deg}}
+/* rotating orbit in hero */
+.orbit{position:absolute;right:-80px;top:10px;width:340px;height:340px;border-radius:50%;z-index:-1;
+  border:2px dashed color-mix(in srgb,var(--accent) 40%,transparent);animation:rot 40s linear infinite}
+.orbit::after{content:'';position:absolute;inset:44px;border-radius:50%;
+  border:2px dotted color-mix(in srgb,var(--accent2) 55%,transparent);animation:rot 26s linear infinite reverse}
+.orbit i{position:absolute;top:-8px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 18px var(--accent)}
+@keyframes rot{to{transform:rotate(360deg)}}
+/* 3D flip cards */
+.fc{perspective:900px;min-height:225px;cursor:pointer;outline:none;border-radius:20px}
+.fc:focus-visible{box-shadow:0 0 0 3px var(--accent)}
+.flip{position:relative;height:100%;min-height:225px;transform-style:preserve-3d;transition:transform .9s var(--ease)}
+.fc.flipped .flip{transform:rotateY(180deg)}
+@media (hover:hover){.fc:hover .flip{transform:rotateY(180deg)}}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:20px;
+  padding:22px;display:flex;flex-direction:column;gap:4px;border:1px solid var(--border);background:var(--surface);
+  box-shadow:0 10px 30px -18px rgba(0,0,0,.35)}
+.face h3{margin:0 0 4px;font-size:1.05rem}
+.face p{margin:0;color:var(--muted);font-size:.95rem}
+.front .ico{font-size:1.9rem;line-height:1;transition:transform .8s var(--ease)}
+.fc:hover .ico{transform:rotate(360deg) scale(1.15)}
+.hint{margin-top:auto;font-size:.78rem;color:var(--accent);font-weight:600}
+.back{transform:rotateY(180deg);border:0;justify-content:center;color:var(--on-accent);
+  background:radial-gradient(circle at 15% 0%,rgba(255,255,255,.22),transparent 55%),var(--accent)}
+.back p{color:var(--on-accent);font-size:1rem}
 @media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}
   html{scroll-behavior:auto}
 }
 </style>
@@ -161,7 +195,7 @@ body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms
 </nav>
 <div class="wrap">
   <header class="hero" id="home">
-    <div class="blob b1"></div><div class="blob b2"></div>
+    <div class="blob b1"></div><div class="blob b2"></div><div class="orbit"><i></i></div>
     <div class="brand">🥗 NutriCheck</div>
     <h1 id="title">Eat well. Know your numbers.</h1>
     <p class="lead">Calculate your BMI (IMC – Índice de Massa Corporal) in seconds, then explore simple, practical nutrition habits.</p>
@@ -169,7 +203,7 @@ body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms
 
   <section class="rv" id="calculator">
     <h2>BMI (IMC) calculator</h2>
-    <div class="card">
+    <div class="card spin">
       <div class="seg" id="seg" data-u="metric" role="group" aria-label="Units">
         <span class="pill"></span>
         <button id="u-m" class="on" type="button">Metric</button>
@@ -207,31 +241,19 @@ body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms
       <button class="chip" data-f="drink" type="button">Drinks</button>
       <button class="chip" data-f="routine" type="button">Routine</button>
     </div>
-    <div class="grid" id="grid">
-      <div class="tip rv" data-c="food"><div class="card"><h3>🥦 Half your plate: plants</h3><p>Vegetables and fruit add fibre, vitamins and volume. Aim for a variety of colours through the week.</p></div></div>
-      <div class="tip rv" data-c="food"><div class="card"><h3>🌾 Choose whole grains</h3><p>Oats, brown rice, whole-wheat bread and legumes give steadier energy than refined grains.</p></div></div>
-      <div class="tip rv" data-c="food"><div class="card"><h3>🐟 Quality protein</h3><p>Fish, eggs, poultry, beans, lentils and tofu help you feel full and support muscle.</p></div></div>
-      <div class="tip rv" data-c="food"><div class="card"><h3>🫒 Healthier fats</h3><p>Olive oil, nuts, seeds and oily fish beat fried and heavily processed foods.</p></div></div>
-      <div class="tip rv" data-c="drink"><div class="card"><h3>💧 Stay hydrated</h3><p>Water is the best everyday drink. Go easy on sugary drinks and juices.</p></div></div>
-      <div class="tip rv" data-c="routine"><div class="card"><h3>🕒 Regular meals</h3><p>Eating at roughly the same times each day supports steady energy, mood and sleep.</p></div></div>
-    </div>
+    <div class="grid" id="grid"></div>
     <p class="note rv">Some medications can affect appetite, thirst or weight. If you take any, check with your doctor or pharmacist before making big changes to your diet.</p>
   </section>
 
   <section id="diets">
     <h2 class="rv">Popular eating patterns</h2>
-    <div class="dgrid">
-      <div class="diet rv"><div class="card"><h3>🫒 Mediterranean</h3><p>Vegetables, legumes, olive oil, fish and whole grains, with little red meat.</p><span class="tag">Heart health</span><span class="tag">Flexible</span></div></div>
-      <div class="diet rv"><div class="card"><h3>🌱 Plant-based</h3><p>Built around vegetables, fruit, grains, legumes and nuts. Plan for vitamin B12 and iron.</p><span class="tag">High fibre</span><span class="tag">Plan B12</span></div></div>
-      <div class="diet rv"><div class="card"><h3>🧂 DASH</h3><p>Designed to support healthy blood pressure: more produce and dairy, less salt and processed food.</p><span class="tag">Blood pressure</span></div></div>
-      <div class="diet rv"><div class="card"><h3>🥑 Lower-carb</h3><p>Fewer starchy and sugary foods, more protein and fats. Quality of food still matters.</p><span class="tag">Needs care</span></div></div>
-    </div>
+    <div class="dgrid" id="dgrid"></div>
     <p class="note rv">The best pattern is one you can keep up. Some health conditions and medications are sensitive to changes in salt, fluids or weight, so check with a doctor or dietitian before making big changes.</p>
   </section>
 
   <section id="metrics">
     <h2 class="rv">Know your metrics</h2>
-    <div class="card rv">
+    <div class="card spin rv">
       <h3 style="margin:0">BMI ranges</h3>
       <div class="zones">
         <div class="zone"><span>Underweight</span><div class="zbar"><b style="--w:14%;background:var(--c1)"></b></div><span>&lt; 18.5</span></div>
@@ -240,7 +262,7 @@ body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms
         <div class="zone"><span>Obesity</span><div class="zbar"><b style="--w:40%;background:var(--c4)"></b></div><span>30+</span></div>
       </div>
     </div>
-    <div class="card rv" style="margin-top:14px">
+    <div class="card spin rv" style="margin-top:14px">
       <h3 style="margin:0">Waist-to-height ratio</h3>
       <p class="note" style="margin:6px 0 0">Waist ÷ height. Many guidelines suggest keeping it under 0.5. It’s another screening tool, not a diagnosis.</p>
       <div class="mini">
@@ -273,6 +295,44 @@ body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms
   }
   addEventListener('scroll', prog, { passive:true }); prog();
 
+  /* flip cards (rendered from data) */
+  var TIPS = [
+    ['food','🥦','Half your plate: plants','Vegetables and fruit add fibre, vitamins and volume.','Add one extra vegetable to your usual lunch and dinner this week.'],
+    ['food','🌾','Choose whole grains','Oats, brown rice and whole-wheat bread give steadier energy.','Swap white bread or pasta for a whole-grain version once a day.'],
+    ['food','🐟','Quality protein','Fish, eggs, poultry, beans and tofu help you feel full.','Try oily fish such as sardines or salmon once or twice a week.'],
+    ['food','🫒','Healthier fats','Olive oil, nuts and seeds beat fried and heavily processed foods.','Cook with olive oil and keep a small handful of nuts as a snack.'],
+    ['drink','💧','Stay hydrated','Water is the best everyday drink.','Keep a bottle in sight and sip through the day. Go easy on sugary drinks.'],
+    ['drink','☕','Mind the caffeine','Coffee and energy drinks can affect sleep and restlessness.','Keep caffeine to the morning, and keep your daily amount steady.'],
+    ['routine','🕒','Regular meals','Eating at similar times supports energy, mood and sleep.','Pick set times for breakfast, lunch and dinner and keep them steady.']
+  ];
+  var DIETS = [
+    ['🫒','Mediterranean','Vegetables, legumes, olive oil, fish and whole grains, with little red meat.','Easy to follow long term and well studied for heart health.','Heart health|Flexible'],
+    ['🌱','Plant-based','Built around vegetables, fruit, grains, legumes and nuts.','Plan for vitamin B12 and iron, and ask a dietitian if you cut out all animal foods.','High fibre|Plan B12'],
+    ['🧂','DASH','Less salt, more fruit, vegetables and low-fat dairy.','Designed to support healthy blood pressure.','Blood pressure'],
+    ['🥑','Lower-carb','Fewer starchy and sugary foods, more protein and fats.','Food quality still matters. Check with a doctor if you have a condition or take medication.','Needs care']
+  ];
+  function fc(cls, cat, ico, title, text, back, backTitle, tags){
+    var d = document.createElement('div');
+    d.className = cls + ' rv'; if (cat) d.dataset.c = cat;
+    d.tabIndex = 0; d.setAttribute('role','button'); d.setAttribute('aria-pressed','false');
+    d.innerHTML = '<div class="flip"><div class="face front"><div class="ico">' + ico + '</div><h3>' + title + '</h3><p>' + text + '</p>' +
+      (tags || '') + '<span class="hint">↻ Flip</span></div><div class="face back"><h3>' + backTitle + '</h3><p>' + back + '</p></div></div>';
+    return d;
+  }
+  TIPS.forEach(function(t){ $('grid').appendChild(fc('fc tip', t[0], t[1], t[2], t[3], t[4], 'Try this')); });
+  DIETS.forEach(function(d){
+    var tags = d[4].split('|').map(function(x){ return '<span class="tag">' + x + '</span>'; }).join('');
+    $('dgrid').appendChild(fc('fc', '', d[0], d[1], d[2], d[3], 'Good to know', tags));
+  });
+  function toggleCard(e){
+    var c = e.target.closest('.fc'); if (!c) return;
+    var on = c.classList.toggle('flipped'); c.setAttribute('aria-pressed', on);
+  }
+  ['grid','dgrid'].forEach(function(id){
+    $(id).addEventListener('click', function(e){ if (!matchMedia('(hover:hover)').matches) toggleCard(e); });
+    $(id).addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleCard(e); } });
+  });
+
   /* reveal on scroll */
   var rv = document.querySelectorAll('.rv');
   rv.forEach(function(el,i){ el.style.setProperty('--i', (i % 6)); });
@@ -285,18 +345,6 @@ body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms
     }, { threshold:.12 });
     rv.forEach(function(el){ io.observe(el); });
   } else { rv.forEach(function(el){ el.classList.add('in'); }); }
-
-  /* 3D tilt on cards */
-  document.querySelectorAll('.tip').forEach(function(tip){
-    var c = tip.firstElementChild;
-    tip.addEventListener('pointermove', function(e){
-      if (reduced) return;
-      var r = tip.getBoundingClientRect();
-      c.style.setProperty('--ry', (((e.clientX - r.left)/r.width) - .5) * 14 + 'deg');
-      c.style.setProperty('--rx', (.5 - ((e.clientY - r.top)/r.height)) * 14 + 'deg');
-    });
-    tip.addEventListener('pointerleave', function(){ c.style.setProperty('--rx','0deg'); c.style.setProperty('--ry','0deg'); });
-  });
 
   /* gauge arcs: 4 colour zones across BMI 15–40 */
   var zones = [[15,18.5,'var(--c1)'],[18.5,25,'var(--c2)'],[25,30,'var(--c3)'],[30,40,'var(--c4)']];
