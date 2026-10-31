@@ -6,190 +6,418 @@
 <title>NutriCheck – BMI (IMC) calculator &amp; nutrition guide</title>
 <style>
 :root{
-  --bg:#f6f8f4; --surface:#ffffff; --text:#1d2a22; --muted:#5b6b61; --border:#dfe6dc;
-  --accent:#2f7d4f; --accent-text:#ffffff; --soft:#e8f2ea;
-  --c-under:#4a8fd8; --c-normal:#3fa66b; --c-over:#e0a43a; --c-obese:#d4603f;
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  color-scheme:light;
+  --bg:#f4f8f3; --surface:#fff; --text:#18261e; --muted:#5a6b60; --border:#dce6da;
+  --accent:#2f7d4f; --accent2:#7bc96f; --on-accent:#fff; --soft:#e6f2e8;
+  --c1:#4a8fd8; --c2:#3fa66b; --c3:#e0a43a; --c4:#d4603f;
+  --ease:cubic-bezier(.2,.8,.2,1); color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#111a15; --surface:#18241d; --text:#e6efe8; --muted:#9db0a3; --border:#2a3b31;
-    --accent:#5cc185; --accent-text:#0d1a12; --soft:#1e3026; color-scheme:dark;
+    --bg:#0f1913; --surface:#17241c; --text:#e6efe8; --muted:#9db0a3; --border:#2a3b31;
+    --accent:#5cc185; --accent2:#2f7d4f; --on-accent:#0d1a12; --soft:#1d3025; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#111a15; --surface:#18241d; --text:#e6efe8; --muted:#9db0a3; --border:#2a3b31;
-  --accent:#5cc185; --accent-text:#0d1a12; --soft:#1e3026; color-scheme:dark;
+  --bg:#0f1913; --surface:#17241c; --text:#e6efe8; --muted:#9db0a3; --border:#2a3b31;
+  --accent:#5cc185; --accent2:#2f7d4f; --on-accent:#0d1a12; --soft:#1d3025; color-scheme:dark;
 }
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55}
-.wrap{max-width:860px;margin:0 auto;padding:0 20px}
-header{padding:44px 0 24px}
-.brand{font-weight:700;letter-spacing:.02em;color:var(--accent)}
-h1{font-size:clamp(1.9rem,5vw,2.8rem);line-height:1.15;margin:.4em 0 .3em}
-header p{color:var(--muted);max-width:56ch;margin:0;font-size:1.05rem}
-section{margin:28px 0}
-h2{font-size:1.4rem;margin:0 0 14px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
-.seg{display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin-bottom:16px}
-.seg button{border:0;background:transparent;color:var(--text);padding:8px 18px;font:inherit;cursor:pointer}
-.seg button.on{background:var(--accent);color:var(--accent-text)}
-.fields{display:flex;flex-wrap:wrap;gap:14px}
-.field{flex:1 1 140px}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px;position:relative}
+#prog{position:fixed;left:0;top:0;height:3px;width:100%;transform:scaleX(0);transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:50}
+
+/* hero */
+.hero{position:relative;padding:70px 0 40px;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.45;z-index:-1;animation:float 14s ease-in-out infinite}
+.b1{width:300px;height:300px;background:var(--accent2);top:-80px;right:-60px}
+.b2{width:240px;height:240px;background:var(--c1);bottom:-60px;left:-60px;animation-delay:-5s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,40px) scale(1.15)}}
+.brand{font-weight:700;color:var(--accent)}
+h1{font-size:clamp(2.1rem,6vw,3.4rem);line-height:1.1;margin:.35em 0}
+h1 .w{display:inline-block;opacity:0;transform:translateY(40px) rotate(3deg);
+  animation:rise .9s var(--ease) forwards;animation-delay:calc(var(--i)*90ms + 150ms)}
+@keyframes rise{to{opacity:1;transform:none}}
+.lead{color:var(--muted);max-width:54ch;font-size:1.1rem;opacity:0;animation:rise .9s var(--ease) .7s forwards}
+
+/* reveal on scroll */
+.rv{opacity:0;transform:translateY(36px) scale(.98);
+  transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:calc(var(--i,0)*80ms)}
+.rv.up{transform:translateY(-36px) scale(.98)}
+.rv.in{opacity:1;transform:none}
+
+h2{font-size:1.5rem;margin:0 0 14px}
+section{margin:44px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;
+  box-shadow:0 10px 30px -18px rgba(0,0,0,.35)}
+
+/* unit switch with sliding pill */
+.seg{position:relative;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);
+  border-radius:999px;margin-bottom:18px;max-width:340px;background:var(--bg)}
+.seg .pill{position:absolute;inset:3px auto 3px 3px;width:calc(50% - 3px);border-radius:999px;
+  background:var(--accent);transition:transform .45s var(--ease)}
+.seg[data-u="imperial"] .pill{transform:translateX(100%)}
+.seg button{position:relative;z-index:1;border:0;background:none;padding:9px 12px;font:inherit;cursor:pointer;
+  color:var(--text);transition:color .3s}
+.seg button.on{color:var(--on-accent)}
+.fields{display:flex;flex-wrap:wrap;gap:14px;animation:fade .5s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.field{flex:1 1 130px}
 label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
-input{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
-  background:var(--bg);color:var(--text)}
-input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.go{margin-top:18px;width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:600;
-  background:var(--accent);color:var(--accent-text);cursor:pointer}
-.err{color:var(--c-obese);margin:12px 0 0;min-height:1.2em}
-#result{display:none;margin-top:20px;border-top:1px solid var(--border);padding-top:20px}
-.big{font-size:3rem;font-weight:700;line-height:1}
-.cat{font-weight:600;font-size:1.15rem;margin-top:4px}
-.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:22px 0 6px;position:relative}
-.bar span:nth-child(1){width:14%;background:var(--c-under)}
-.bar span:nth-child(2){width:26%;background:var(--c-normal)}
-.bar span:nth-child(3){width:20%;background:var(--c-over)}
-.bar span:nth-child(4){width:40%;background:var(--c-obese)}
-.track{position:relative}
-.marker{position:absolute;top:-6px;width:4px;height:26px;border-radius:2px;background:var(--text);
-  transform:translateX(-50%);transition:left .4s ease}
-.ticks{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
-.range{background:var(--soft);border-radius:10px;padding:10px 14px;margin-top:14px}
-.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+input{width:100%;font:inherit;padding:11px 12px;border-radius:12px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);transition:border-color .25s,box-shadow .25s}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.go{margin-top:18px;width:100%;border:0;border-radius:14px;padding:14px;font:inherit;font-weight:700;cursor:pointer;
+  background:linear-gradient(120deg,var(--accent),var(--accent2));color:var(--on-accent);
+  transition:transform .25s var(--ease),box-shadow .25s}
+.go:hover{transform:translateY(-2px);box-shadow:0 12px 24px -12px var(--accent)}
+.go:active{transform:scale(.97)}
+.err{color:var(--c4);min-height:1.3em;margin:12px 0 0}
+
+/* result */
+#result{display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s var(--ease)}
+#result.open{grid-template-rows:1fr}
+#result>div{overflow:hidden}
+.res-in{padding-top:22px;text-align:center}
+.gauge{width:min(100%,320px);margin:0 auto;display:block;overflow:visible}
+.needle{transform-box:view-box;transform-origin:100px 100px;transform:rotate(-90deg);
+  transition:transform 1.4s cubic-bezier(.3,1.5,.5,1)}
+.big{font-size:3.2rem;font-weight:800;line-height:1;margin-top:-6px}
+.cat{font-weight:700;font-size:1.2rem;transition:color .6s}
+.range{background:var(--soft);border-radius:12px;padding:10px 14px;margin-top:16px;display:inline-block}
+
+/* tips */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:7px 16px;border-radius:999px;
+  font:inherit;cursor:pointer;transition:background .3s,color .3s,transform .25s var(--ease)}
+.chip:hover{transform:translateY(-2px)}
+.chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.tip{perspective:700px}
+.tip .card{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s var(--ease),box-shadow .3s;height:100%}
+.tip:hover .card{box-shadow:0 24px 40px -22px rgba(0,0,0,.5)}
 .tip h3{margin:0 0 6px;font-size:1.05rem}
 .tip p{margin:0;color:var(--muted);font-size:.95rem}
 .note{font-size:.88rem;color:var(--muted)}
-footer{padding:20px 0 48px}
+footer{padding:20px 0 50px}
+::view-transition-group(*){animation-duration:.5s;animation-timing-function:var(--ease)}
+
+/* menu */
+.burger{position:fixed;z-index:60;left:max(14px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 14px);
+  width:46px;height:46px;border-radius:14px;border:1px solid var(--border);background:var(--surface);cursor:pointer;
+  display:grid;place-content:center;gap:5px;box-shadow:0 8px 20px -10px rgba(0,0,0,.4);transition:transform .3s var(--ease)}
+.burger:hover{transform:scale(1.06)}
+.burger i{display:block;width:22px;height:2.5px;border-radius:2px;background:var(--text);transition:transform .45s var(--ease),opacity .25s}
+body.menu .burger i:nth-child(1){transform:translateY(7.5px) rotate(45deg)}
+body.menu .burger i:nth-child(2){opacity:0;transform:scaleX(0)}
+body.menu .burger i:nth-child(3){transform:translateY(-7.5px) rotate(-45deg)}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .4s;z-index:54}
+body.menu .scrim{opacity:1;pointer-events:auto}
+.drawer{position:fixed;z-index:55;top:0;bottom:0;left:0;width:min(300px,84vw);background:var(--surface);
+  border-right:1px solid var(--border);padding:calc(env(safe-area-inset-top,0px) + 78px) 18px 24px;
+  transform:translateX(-102%);transition:transform .55s var(--ease);overflow-y:auto}
+body.menu .drawer{transform:none}
+.drawer a{display:flex;gap:12px;align-items:center;padding:13px 14px;border-radius:14px;color:var(--text);text-decoration:none;
+  font-weight:600;opacity:0;transform:translateX(-24px);transition:opacity .4s,transform .5s var(--ease),background .25s}
+body.menu .drawer a{opacity:1;transform:none;transition-delay:calc(var(--k)*60ms + 150ms),calc(var(--k)*60ms + 150ms),0s}
+.drawer a:hover{background:var(--soft)}
+.drawer a.act{background:var(--soft);color:var(--accent)}
+.drawer small{display:block;color:var(--muted);margin:22px 14px 0;font-size:.8rem}
+/* diets + metrics */
+.dgrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.diet h3{margin:0 0 6px;font-size:1.05rem}
+.diet p{margin:0 0 10px;color:var(--muted);font-size:.95rem}
+.tag{display:inline-block;font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--accent);margin:0 6px 6px 0}
+.zones{display:grid;gap:12px;margin-top:12px}
+.zone{display:grid;grid-template-columns:120px 1fr 74px;align-items:center;gap:12px;font-size:.92rem}
+.zone span:last-child{color:var(--muted);text-align:right}
+.zbar{height:12px;border-radius:999px;background:var(--soft);overflow:hidden}
+.zbar b{display:block;height:100%;width:0;border-radius:999px;transition:width 1.2s var(--ease) .2s}
+.in .zbar b{width:var(--w)}
+.mini{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:12px}
+.mini .go{margin:0;width:auto;padding:11px 20px}
+#whtr-out{margin-top:12px;min-height:1.4em;font-weight:600}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
+<div id="prog"></div>
+<button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><i></i><i></i><i></i></button>
+<div class="scrim" id="scrim"></div>
+<nav class="drawer" id="drawer" aria-label="Sections">
+  <a href="#home"><span>🏠</span>Home</a>
+  <a href="#calculator"><span>🧮</span>BMI calculator</a>
+  <a href="#tips"><span>💡</span>Nutrition tips</a>
+  <a href="#diets"><span>🍽️</span>Diets</a>
+  <a href="#metrics"><span>📏</span>Metrics</a>
+  <small>General information only, not medical advice.</small>
+</nav>
 <div class="wrap">
-  <header>
+  <header class="hero" id="home">
+    <div class="blob b1"></div><div class="blob b2"></div>
     <div class="brand">🥗 NutriCheck</div>
-    <h1>Eat well. Know your numbers.</h1>
-    <p>Calculate your BMI (IMC – Índice de Massa Corporal) in seconds, then explore simple, practical nutrition habits.</p>
+    <h1 id="title">Eat well. Know your numbers.</h1>
+    <p class="lead">Calculate your BMI (IMC – Índice de Massa Corporal) in seconds, then explore simple, practical nutrition habits.</p>
   </header>
 
-  <section aria-labelledby="calc-title">
-    <h2 id="calc-title">BMI (IMC) calculator</h2>
+  <section class="rv" id="calculator">
+    <h2>BMI (IMC) calculator</h2>
     <div class="card">
-      <div class="seg" role="group" aria-label="Units">
-        <button id="u-metric" class="on" type="button">Metric (cm, kg)</button>
-        <button id="u-imp" type="button">Imperial (ft, lb)</button>
+      <div class="seg" id="seg" data-u="metric" role="group" aria-label="Units">
+        <span class="pill"></span>
+        <button id="u-m" class="on" type="button">Metric</button>
+        <button id="u-i" type="button">Imperial</button>
       </div>
-
-      <div class="fields" id="f-metric">
-        <div class="field"><label for="cm">Height (cm)</label><input id="cm" type="number" inputmode="decimal" placeholder="e.g. 175"></div>
-        <div class="field"><label for="kg">Weight (kg)</label><input id="kg" type="number" inputmode="decimal" placeholder="e.g. 70"></div>
+      <div class="fields" id="f-m">
+        <div class="field"><label for="cm">Height (cm)</label><input id="cm" type="number" inputmode="decimal" placeholder="175"></div>
+        <div class="field"><label for="kg">Weight (kg)</label><input id="kg" type="number" inputmode="decimal" placeholder="70"></div>
       </div>
-      <div class="fields" id="f-imp" hidden>
+      <div class="fields" id="f-i" hidden>
         <div class="field"><label for="ft">Height (ft)</label><input id="ft" type="number" inputmode="numeric" placeholder="5"></div>
         <div class="field"><label for="inch">Height (in)</label><input id="inch" type="number" inputmode="decimal" placeholder="9"></div>
         <div class="field"><label for="lb">Weight (lb)</label><input id="lb" type="number" inputmode="decimal" placeholder="154"></div>
       </div>
-
       <button class="go" id="go" type="button">Calculate BMI</button>
       <p class="err" id="err" role="alert"></p>
 
-      <div id="result" aria-live="polite">
-        <div class="big" id="bmi">–</div>
+      <div id="result" aria-live="polite"><div><div class="res-in">
+        <svg class="gauge" viewBox="0 0 200 118" id="gauge" aria-hidden="true">
+          <g class="needle" id="needle"><line x1="100" y1="100" x2="100" y2="28" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="100" r="8" fill="currentColor"/></g>
+        </svg>
+        <div class="big" id="bmi">0.0</div>
         <div class="cat" id="cat"></div>
-        <div class="track">
-          <div class="bar"><span></span><span></span><span></span><span></span></div>
-          <div class="marker" id="marker" style="left:0%"></div>
-        </div>
-        <div class="ticks"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
         <div class="range" id="range"></div>
-      </div>
+      </div></div></div>
     </div>
     <p class="note">BMI is a quick screening tool, not a diagnosis. It doesn’t account for muscle mass, age, sex or body shape. For personal advice, talk to a doctor or registered dietitian.</p>
   </section>
 
-  <section aria-labelledby="tips-title">
-    <h2 id="tips-title">Everyday nutrition basics</h2>
-    <div class="grid">
-      <div class="card tip"><h3>🥦 Fill half your plate with plants</h3><p>Vegetables and fruit add fibre, vitamins and volume. Aim for a variety of colours through the week.</p></div>
-      <div class="card tip"><h3>🌾 Choose whole grains</h3><p>Oats, brown rice, whole-wheat bread and legumes give steadier energy than refined grains.</p></div>
-      <div class="card tip"><h3>🐟 Include quality protein</h3><p>Fish, eggs, poultry, beans, lentils and tofu help you feel full and support muscle.</p></div>
-      <div class="card tip"><h3>🫒 Pick healthier fats</h3><p>Olive oil, nuts, seeds and oily fish are better choices than fried and heavily processed foods.</p></div>
-      <div class="card tip"><h3>💧 Stay hydrated</h3><p>Water is the best everyday drink. Go easy on sugary drinks and juices.</p></div>
-      <div class="card tip"><h3>🕒 Keep regular meals</h3><p>Eating at roughly the same times each day supports steady energy, mood and sleep.</p></div>
+  <section id="tips">
+    <h2 class="rv">Everyday nutrition basics</h2>
+    <div class="chips rv" id="chips">
+      <button class="chip on" data-f="all" type="button">All</button>
+      <button class="chip" data-f="food" type="button">Food</button>
+      <button class="chip" data-f="drink" type="button">Drinks</button>
+      <button class="chip" data-f="routine" type="button">Routine</button>
     </div>
-    <p class="note">Some medications can affect appetite, thirst or weight. If you take any, check with your doctor or pharmacist before making big changes to your diet.</p>
+    <div class="grid" id="grid">
+      <div class="tip rv" data-c="food"><div class="card"><h3>🥦 Half your plate: plants</h3><p>Vegetables and fruit add fibre, vitamins and volume. Aim for a variety of colours through the week.</p></div></div>
+      <div class="tip rv" data-c="food"><div class="card"><h3>🌾 Choose whole grains</h3><p>Oats, brown rice, whole-wheat bread and legumes give steadier energy than refined grains.</p></div></div>
+      <div class="tip rv" data-c="food"><div class="card"><h3>🐟 Quality protein</h3><p>Fish, eggs, poultry, beans, lentils and tofu help you feel full and support muscle.</p></div></div>
+      <div class="tip rv" data-c="food"><div class="card"><h3>🫒 Healthier fats</h3><p>Olive oil, nuts, seeds and oily fish beat fried and heavily processed foods.</p></div></div>
+      <div class="tip rv" data-c="drink"><div class="card"><h3>💧 Stay hydrated</h3><p>Water is the best everyday drink. Go easy on sugary drinks and juices.</p></div></div>
+      <div class="tip rv" data-c="routine"><div class="card"><h3>🕒 Regular meals</h3><p>Eating at roughly the same times each day supports steady energy, mood and sleep.</p></div></div>
+    </div>
+    <p class="note rv">Some medications can affect appetite, thirst or weight. If you take any, check with your doctor or pharmacist before making big changes to your diet.</p>
   </section>
 
-  <footer class="note">© NutriCheck · General information only, not medical advice.</footer>
+  <section id="diets">
+    <h2 class="rv">Popular eating patterns</h2>
+    <div class="dgrid">
+      <div class="diet rv"><div class="card"><h3>🫒 Mediterranean</h3><p>Vegetables, legumes, olive oil, fish and whole grains, with little red meat.</p><span class="tag">Heart health</span><span class="tag">Flexible</span></div></div>
+      <div class="diet rv"><div class="card"><h3>🌱 Plant-based</h3><p>Built around vegetables, fruit, grains, legumes and nuts. Plan for vitamin B12 and iron.</p><span class="tag">High fibre</span><span class="tag">Plan B12</span></div></div>
+      <div class="diet rv"><div class="card"><h3>🧂 DASH</h3><p>Designed to support healthy blood pressure: more produce and dairy, less salt and processed food.</p><span class="tag">Blood pressure</span></div></div>
+      <div class="diet rv"><div class="card"><h3>🥑 Lower-carb</h3><p>Fewer starchy and sugary foods, more protein and fats. Quality of food still matters.</p><span class="tag">Needs care</span></div></div>
+    </div>
+    <p class="note rv">The best pattern is one you can keep up. Some health conditions and medications are sensitive to changes in salt, fluids or weight, so check with a doctor or dietitian before making big changes.</p>
+  </section>
+
+  <section id="metrics">
+    <h2 class="rv">Know your metrics</h2>
+    <div class="card rv">
+      <h3 style="margin:0">BMI ranges</h3>
+      <div class="zones">
+        <div class="zone"><span>Underweight</span><div class="zbar"><b style="--w:14%;background:var(--c1)"></b></div><span>&lt; 18.5</span></div>
+        <div class="zone"><span>Healthy</span><div class="zbar"><b style="--w:26%;background:var(--c2)"></b></div><span>18.5–24.9</span></div>
+        <div class="zone"><span>Overweight</span><div class="zbar"><b style="--w:20%;background:var(--c3)"></b></div><span>25–29.9</span></div>
+        <div class="zone"><span>Obesity</span><div class="zbar"><b style="--w:40%;background:var(--c4)"></b></div><span>30+</span></div>
+      </div>
+    </div>
+    <div class="card rv" style="margin-top:14px">
+      <h3 style="margin:0">Waist-to-height ratio</h3>
+      <p class="note" style="margin:6px 0 0">Waist ÷ height. Many guidelines suggest keeping it under 0.5. It’s another screening tool, not a diagnosis.</p>
+      <div class="mini">
+        <div class="field"><label for="waist">Waist (cm)</label><input id="waist" type="number" inputmode="decimal" placeholder="82"></div>
+        <div class="field"><label for="hcm">Height (cm)</label><input id="hcm" type="number" inputmode="decimal" placeholder="175"></div>
+        <button class="go" id="whtr" type="button">Calculate</button>
+      </div>
+      <div id="whtr-out" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <footer class="note rv">© NutriCheck · General information only, not medical advice.</footer>
 </div>
 
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var unit = 'metric';
 
+  /* split headline into animated words */
+  var t = $('title'), words = t.textContent.split(' ');
+  t.innerHTML = words.map(function(w,i){ return '<span class="w" style="--i:'+i+'">'+w+'</span>'; }).join(' ');
+
+  /* scroll progress */
+  function prog(){
+    var h = document.documentElement;
+    var p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+    $('prog').style.transform = 'scaleX(' + Math.min(1, p) + ')';
+  }
+  addEventListener('scroll', prog, { passive:true }); prog();
+
+  /* reveal on scroll */
+  var rv = document.querySelectorAll('.rv');
+  rv.forEach(function(el,i){ el.style.setProperty('--i', (i % 6)); });
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) e.target.classList.toggle('up', e.boundingClientRect.top < 0);
+        e.target.classList.toggle('in', e.isIntersecting);
+      });
+    }, { threshold:.12 });
+    rv.forEach(function(el){ io.observe(el); });
+  } else { rv.forEach(function(el){ el.classList.add('in'); }); }
+
+  /* 3D tilt on cards */
+  document.querySelectorAll('.tip').forEach(function(tip){
+    var c = tip.firstElementChild;
+    tip.addEventListener('pointermove', function(e){
+      if (reduced) return;
+      var r = tip.getBoundingClientRect();
+      c.style.setProperty('--ry', (((e.clientX - r.left)/r.width) - .5) * 14 + 'deg');
+      c.style.setProperty('--rx', (.5 - ((e.clientY - r.top)/r.height)) * 14 + 'deg');
+    });
+    tip.addEventListener('pointerleave', function(){ c.style.setProperty('--rx','0deg'); c.style.setProperty('--ry','0deg'); });
+  });
+
+  /* gauge arcs: 4 colour zones across BMI 15–40 */
+  var zones = [[15,18.5,'var(--c1)'],[18.5,25,'var(--c2)'],[25,30,'var(--c3)'],[30,40,'var(--c4)']];
+  function pt(b){ var a = Math.PI * (1 - (b-15)/25); return [100 + 90*Math.cos(a), 100 - 90*Math.sin(a)]; }
+  var ns = 'http://www.w3.org/2000/svg', g = $('gauge'), needle = $('needle');
+  zones.forEach(function(z,i){
+    var s = pt(z[0] + .25), e = pt(z[1] - .25), p = document.createElementNS(ns,'path');
+    p.setAttribute('d','M'+s[0]+' '+s[1]+' A90 90 0 0 1 '+e[0]+' '+e[1]);
+    p.setAttribute('fill','none'); p.setAttribute('stroke',z[2]); p.setAttribute('stroke-width','14'); p.setAttribute('stroke-linecap','round');
+    g.insertBefore(p, needle);
+  });
+
+  /* unit switch with panel slide */
   function setUnit(u){
     unit = u;
-    $('u-metric').classList.toggle('on', u === 'metric');
-    $('u-imp').classList.toggle('on', u === 'imperial');
-    $('f-metric').hidden = (u !== 'metric');
-    $('f-imp').hidden = (u !== 'imperial');
-    $('result').style.display = 'none';
+    $('seg').dataset.u = u;
+    $('u-m').classList.toggle('on', u === 'metric');
+    $('u-i').classList.toggle('on', u === 'imperial');
+    $('f-m').hidden = (u !== 'metric');
+    $('f-i').hidden = (u !== 'imperial');
+    reset();
+  }
+  function reset(){
+    $('result').classList.remove('open');
+    needle.style.transform = 'rotate(-90deg)';
     $('err').textContent = '';
   }
+  $('u-m').onclick = function(){ setUnit('metric'); };
+  $('u-i').onclick = function(){ setUnit('imperial'); };
 
   function category(b){
-    if (b < 18.5) return { t: 'Underweight', c: 'var(--c-under)' };
-    if (b < 25)   return { t: 'Healthy weight', c: 'var(--c-normal)' };
-    if (b < 30)   return { t: 'Overweight', c: 'var(--c-over)' };
-    return { t: 'Obesity range', c: 'var(--c-obese)' };
+    if (b < 18.5) return ['Underweight','var(--c1)'];
+    if (b < 25)   return ['Healthy weight','var(--c2)'];
+    if (b < 30)   return ['Overweight','var(--c3)'];
+    return ['Obesity range','var(--c4)'];
+  }
+  function tween(to, ms, fn){
+    if (reduced){ fn(to); return; }
+    var t0 = performance.now();
+    (function step(t){
+      var k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+      fn(to * e);
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
   }
 
   function calc(){
     var h, w;
-    if (unit === 'metric'){
-      h = parseFloat($('cm').value) / 100;
-      w = parseFloat($('kg').value);
-    } else {
-      var ft = parseFloat($('ft').value) || 0;
-      var inch = parseFloat($('inch').value) || 0;
-      h = (ft * 12 + inch) * 0.0254;
-      w = parseFloat($('lb').value) * 0.45359237;
-    }
-    if (!(h > 0.9 && h < 2.5) || !(w > 20 && w < 400)){
-      $('result').style.display = 'none';
-      $('err').textContent = 'Please enter a realistic height and weight.';
-      return;
+    if (unit === 'metric'){ h = parseFloat($('cm').value)/100; w = parseFloat($('kg').value); }
+    else { h = ((parseFloat($('ft').value)||0)*12 + (parseFloat($('inch').value)||0))*0.0254; w = parseFloat($('lb').value)*0.45359237; }
+    if (!(h > .9 && h < 2.5) || !(w > 20 && w < 400)){
+      reset(); $('err').textContent = 'Please enter a realistic height and weight.'; return;
     }
     $('err').textContent = '';
+    var bmi = w/(h*h), c = category(bmi);
+    $('result').classList.add('open');
+    $('bmi').textContent = '0.0';
+    $('cat').textContent = c[0]; $('cat').style.color = c[1];
+    needle.style.transform = 'rotate(-90deg)';
+    var deg = -90 + Math.max(0, Math.min(1, (bmi-15)/25)) * 180;
+    setTimeout(function(){ needle.style.transform = 'rotate(' + deg + 'deg)'; }, 250);
+    tween(bmi, 1300, function(v){ $('bmi').textContent = v.toFixed(1); });
 
-    var bmi = w / (h * h);
-    var cat = category(bmi);
-    $('bmi').textContent = bmi.toFixed(1);
-    $('cat').textContent = cat.t;
-    $('cat').style.color = cat.c;
-
-    var pos = Math.max(0, Math.min(1, (bmi - 15) / 25)) * 100;
-    $('marker').style.left = pos + '%';
-
-    var lo = 18.5 * h * h, hi = 24.9 * h * h, u = 'kg';
+    var lo = 18.5*h*h, hi = 24.9*h*h, u = 'kg';
     if (unit === 'imperial'){ lo /= 0.45359237; hi /= 0.45359237; u = 'lb'; }
-    $('range').textContent = 'For your height, a BMI of 18.5–24.9 corresponds to about ' +
-      lo.toFixed(0) + '–' + hi.toFixed(0) + ' ' + u + '.';
+    $('range').textContent = 'For your height, a BMI of 18.5–24.9 is about ' + lo.toFixed(0) + '–' + hi.toFixed(0) + ' ' + u + '.';
+    setTimeout(function(){ $('result').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block:'center' }); }, 300);
+  }
+  $('go').onclick = calc;
+  ['cm','kg','ft','inch','lb'].forEach(function(id){ $(id).addEventListener('keydown', function(e){ if (e.key === 'Enter') calc(); }); });
 
-    $('result').style.display = 'block';
+  /* filter chips with View Transitions (morphing cards) */
+  var tips = document.querySelectorAll('.tip');
+  tips.forEach(function(el,i){ el.style.viewTransitionName = 'tip' + i; });
+  document.querySelectorAll('.chip').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      var f = ch.dataset.f;
+      var run = function(){
+        document.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('on', x === ch); });
+        tips.forEach(function(el){ el.hidden = !(f === 'all' || el.dataset.c === f); });
+      };
+      if (document.startViewTransition && !reduced) document.startViewTransition(run); else run();
+    });
+  });
+
+  /* side menu */
+  var body = document.body, burger = $('burger'), drawer = $('drawer');
+  function menu(open){
+    body.classList.toggle('menu', open);
+    burger.setAttribute('aria-expanded', open);
+    drawer.inert = !open;
+  }
+  menu(false);
+  burger.onclick = function(){ menu(!body.classList.contains('menu')); };
+  $('scrim').onclick = function(){ menu(false); };
+  addEventListener('keydown', function(e){ if (e.key === 'Escape') menu(false); });
+  var links = {};
+  drawer.querySelectorAll('a').forEach(function(a,i){
+    a.style.setProperty('--k', i);
+    links[a.getAttribute('href').slice(1)] = a;
+    a.addEventListener('click', function(){ menu(false); });
+  });
+  if ('IntersectionObserver' in window){
+    var spy = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting) Object.keys(links).forEach(function(k){ links[k].classList.toggle('act', k === e.target.id); });
+      });
+    }, { rootMargin:'-45% 0px -50% 0px' });
+    Object.keys(links).forEach(function(k){ spy.observe($(k)); });
   }
 
-  $('u-metric').addEventListener('click', function(){ setUnit('metric'); });
-  $('u-imp').addEventListener('click', function(){ setUnit('imperial'); });
-  $('go').addEventListener('click', calc);
-  ['cm','kg','ft','inch','lb'].forEach(function(id){
-    $(id).addEventListener('keydown', function(e){ if (e.key === 'Enter') calc(); });
-  });
+  /* waist-to-height ratio */
+  $('whtr').onclick = function(){
+    var w = parseFloat($('waist').value), h = parseFloat($('hcm').value), out = $('whtr-out');
+    if (!(w > 30 && w < 250) || !(h > 90 && h < 250)){ out.textContent = 'Please enter realistic measurements.'; out.style.color = 'var(--c4)'; return; }
+    var r = w / h, msg, col;
+    if (r < .5){ msg = 'Within the commonly suggested range (under 0.5).'; col = 'var(--c2)'; }
+    else { msg = 'Above 0.5, which many guidelines link with higher health risk. A doctor can give personal advice.'; col = 'var(--c3)'; }
+    out.style.color = col;
+    out.textContent = 'Ratio ' + r.toFixed(2) + ' – ' + msg;
+  };
 })();
 </script>
 </body>
